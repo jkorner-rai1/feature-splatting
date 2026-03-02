@@ -1,0 +1,50 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Train Feature Splatting",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "nerfstudio.scripts.train",
+            "args": [
+                "feature-splatting",
+                "--data",
+                "/shared/data/insta360/20260217_eth_factory_ProRes_Codec/VID_20260217_102104_00_045/colmap_output_fps_3/processed_0_debug/",
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Render: camera-path",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "nerfstudio.scripts.render",
+            "args": [
+                "camera-path",
+                "--load-config",
+                "../navfacto/outputs/processed_0/feature-splatting/2026-02-26_125917/config.yml",
+                "--camera-path-filename",
+                "/shared/data/insta360/20260217_eth_factory_ProRes_Codec/VID_20260217_102104_00_045/colmap_output_fps_3/processed_0/camera_paths/2026-02-26-13-42-07.json",
+                "--output-path",
+                "renders/debug.mp4"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Train Feature Splatting dino",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "nerfstudio.scripts.train",
+            "args": [
+                "feature-splatting",
+                "--data",
+                "/shared/data/insta360/20260217_eth_factory_ProRes_Codec/VID_20260217_102104_00_045/colmap_output_fps_3/processed_0_debug/",
+                "--pipeline.datamanager.feature-type","DINO",
+                "--pipeline.model.feat-aux-loss-weight","0.0"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

@@ -18,7 +18,7 @@ class ViewerUtils:
     def update_text_embedding(self, name_key: str, raw_text: str):
         """Compute CLIP embeddings based on queries and update state"""
         texts = [x.strip() for x in raw_text.split(",") if x.strip()]
-        if not texts:
+        if not texts or not self.text_encoding_func:
             self.text_embedding_dict[name_key] = (texts, None)
         else:
             # Embed text queries

@@ -24,3 +24,15 @@ class SAMCLIPArgs:
             "mobilesamv2_encoder_name": cls.mobilesamv2_encoder_name,
             "clip_model_name": cls.clip_model_name,
         }
+
+class DINOArgs:
+    dino_resolution: int = 800
+    dinov2_model_name: str = 'dinov2_vits14'
+    
+    @classmethod
+    def id_dict(cls):
+        """Return dict that identifies the DINO model parameters."""
+        return {
+            "dino_resolution": cls.dino_resolution,
+            "dinov2_model_name": cls.dinov2_model_name,
+        }

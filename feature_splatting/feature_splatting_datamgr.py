@@ -12,26 +12,26 @@ from nerfstudio.data.datamanagers.full_images_datamanager import (
 )
 from nerfstudio.utils.rich_utils import CONSOLE
 
-from feature_splatting.feature_extractor_cfg import SAMCLIPArgs
+from feature_splatting.feature_extractor_cfg import DINOArgs, SAMCLIPArgs
 
 # SAMCLIP
-from feature_splatting.feature_extractor import batch_extract_feature
+from feature_splatting.feature_extractor import batch_extract_feature, batch_extract_feature_dino
 
 feat_type_to_extract_fn = {
     "CLIP": None,
-    "DINO": None,
+    "DINO": batch_extract_feature_dino,
     "SAMCLIP": batch_extract_feature,
 }
 
 feat_type_to_args = {
     "CLIP": None,
-    "DINO": None,
+    "DINO": DINOArgs,
     "SAMCLIP": SAMCLIPArgs,
 }
 
 feat_type_to_main_feature_name = {
     "CLIP": "clip",
-    "DINO": "dino",
+    "DINO": "dinov2",
     "SAMCLIP": "samclip",
 }
 
@@ -68,7 +68,8 @@ class FeatureSplattingDataManager(FullImageDatamanager):
         self.train_dataset.metadata["feature_type"] = self.config.feature_type
         self.train_dataset.metadata["feature_dim_dict"] = feature_dim_dict
         self.train_dataset.metadata["main_feature_name"] = feat_type_to_main_feature_name[self.config.feature_type]
-        self.train_dataset.metadata["clip_model_name"] = feat_type_to_args[self.config.feature_type].clip_model_name
+        if self.config.feature_type.lower() in ["clip", "samclip"]:
+            self.train_dataset.metadata["clip_model_name"] = feat_type_to_args[self.config.feature_type].clip_model_name
 
         # Garbage collect
         torch.cuda.empty_cache()
@@ -90,6 +91,9 @@ class FeatureSplattingDataManager(FullImageDatamanager):
         if self.config.enable_cache and cache_path.exists():
             cache_dict = torch.load(cache_path)
             if cache_dict.get("image_fnames") != image_fnames:
+                if len(cache_dict.get("image_fnames")) == len(image_fnames):
+                    # Experimental, sometimes the downsampled images are stored in directory images_<x>, not sure if it works, but including this if clause prevents the model to compute all the clip and dino features for train and eval set during the ns-render camera command
+                    return cache_dict["feature_dict"]
                 CONSOLE.print("Image filenames have changed, cache invalidated...")
             elif cache_dict.get("args") != extract_args.id_dict():
                 CONSOLE.print("Feature extraction args have changed, cache invalidated...")

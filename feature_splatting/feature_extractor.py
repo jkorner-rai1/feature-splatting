@@ -253,6 +253,45 @@ def batch_extract_feature(image_paths: List[str], args):
 
     return ret_dict
 
+
+@torch.no_grad()
+def batch_extract_feature_dino(image_paths: List[str], args):
+    """Extract only DINOv2 features without CLIP or SAM."""
+    dino_transform = T.Compose([
+        T.ToTensor(),
+        T.Normalize(mean=[0.5], std=[0.5]),
+    ])
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    ret_dict = {'dinov2': []}
+    
+    print(f"Computing DINO features for {len(image_paths)} images.")
+    print("Loading DINOv2 model...")
+    dinov2 = torch.hub.load('facebookresearch/dinov2', args.dinov2_model_name)
+    dinov2 = dinov2.to(device)
+    dinov2.eval()
+
+    for i in trange(len(image_paths)):
+        image = Image.open(image_paths[i])
+        image = resize_image(image, args.dino_resolution)
+        image = dino_transform(image)[:3].unsqueeze(0)
+        image, target_H, target_W = interpolate_to_patch_size(image, dinov2.patch_size)
+        image = image.to(device)
+        
+        with torch.no_grad():
+            features = dinov2.forward_features(image)["x_norm_patchtokens"][0]
+
+        features = features.cpu()
+        features_hwc = features.reshape((target_H // dinov2.patch_size, target_W // dinov2.patch_size, -1))
+        features_chw = features_hwc.permute((2, 0, 1))
+        ret_dict['dinov2'].append(features_chw)
+    
+    del dinov2
+    pytorch_gc()
+    
+    ret_dict['dinov2'] = torch.stack(ret_dict['dinov2'], dim=0)  # BCHW
+    return ret_dict
+
 if __name__ == "__main__":
     parser = ArgumentParser("Compute reference features for feature splatting")
     parser.add_argument("--source_path", "-s", required=True, type=str)

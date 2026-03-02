@@ -397,18 +397,19 @@ class FeatureSplattingModel(SplatfactoModel):
         """This function is not called during training, but used for visualization in browser. So we can use it to
         add visualization not needed during training.
         """
-        editing_dict = self.gaussian_editor.prepare_editing_dict(self.translation_vec.value, self.yaw_rotation.value, self.physics_sim_checkbox.value)
-        if self.edit_checkbox.value:
+        
+        if hasattr(self, "edit_checkbox") and self.edit_checkbox.value:
             # Editing mode
+            editing_dict = self.gaussian_editor.prepare_editing_dict(self.translation_vec.value, self.yaw_rotation.value, self.physics_sim_checkbox.value)
             self.gaussian_editor.pre_rendering_process(self.means, self.opacities, self.scales, self.quats,
                                                        editing_dict=editing_dict,
                                                        min_offset=torch.tensor(self.bbox_min_offset_vec.value).float().cuda() / 10.0,
                                                        max_offset=torch.tensor(self.bbox_max_offset_vec.value).float().cuda() / 10.0,
                                                        view_main_obj_only=self.main_obj_only_checkbox.value)
         outs = super().get_outputs_for_camera(camera, obb_box)
-        if self.edit_checkbox.value:
+        if hasattr(self, "edit_checkbox") and self.edit_checkbox.value:
             self.gaussian_editor.post_rendering_process(self.means, self.opacities, self.quats, self.scales)
-        if self.physics_sim_checkbox.value:
+        if hasattr(self, "physics_sim_checkbox") and self.physics_sim_checkbox.value:
             # turn off feature rendering during physics sim for speed
             return outs
         # Consistent pca that does not flicker
